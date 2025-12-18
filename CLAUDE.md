@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Counter-Drone C2 Simulator (2D-only version)**
+**Counter-Drone C2 Simulator**
 
-A small-unit low-cost counter-drone command & control system simulator. This is the 2D simulation-only version (AirSim/3D features removed).
+A small-unit low-cost counter-drone command & control system simulator.
 
 ## Build & Run Commands
 
