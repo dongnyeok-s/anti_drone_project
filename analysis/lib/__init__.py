@@ -9,5 +9,7 @@ from . import metrics
 from . import plots
 from . import report
 from . import summarize
+from . import statistics
+from . import roc_analysis
 
-__all__ = ['loader', 'metrics', 'plots', 'report', 'summarize']
+__all__ = ['loader', 'metrics', 'plots', 'report', 'summarize', 'statistics', 'roc_analysis']

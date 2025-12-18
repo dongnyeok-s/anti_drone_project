@@ -1,80 +1,43 @@
 # CLAUDE.md
 
-이 파일은 Claude Code가 이 프로젝트를 이해하고 작업하는 데 필요한 컨텍스트를 제공합니다.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 프로젝트 개요
+## Project Overview
 
-**소부대 대드론 C2 시뮬레이터 (2D-only 버전)**
+**Counter-Drone C2 Simulator (2D-only version)**
 
-소부대 단위의 저비용 Counter-Drone 지휘통제 시스템 시뮬레이터입니다.
-2D 시뮬레이션 전용 버전으로, AirSim/3D 기능은 제거되어 있습니다.
+A small-unit low-cost counter-drone command & control system simulator. This is the 2D simulation-only version (AirSim/3D features removed).
 
-## 기술 스택
+## Build & Run Commands
 
-### Frontend (`/frontend`)
-- React 18 + TypeScript
-- Vite 5.0 (빌드 도구)
-- TailwindCSS (스타일링)
-- Framer Motion (애니메이션)
-- WebSocket 클라이언트
-
-### Simulator (`/simulator`)
-- Node.js + TypeScript
-- WebSocket 서버 (ws 라이브러리)
-- Zod (스키마 검증)
-- Jest (테스트)
-
-### Analysis (`/analysis`)
-- Python (pandas, matplotlib, seaborn, numpy)
-
-## 디렉토리 구조
-
-```
-드론지휘통제체계-2D-only/
-├── frontend/              # C2 UI (React)
-│   └── src/
-│       ├── components/    # UI 컴포넌트
-│       ├── hooks/         # React 훅 (useWebSocket)
-│       ├── logic/         # 클라이언트 시뮬레이션 로직
-│       ├── types/         # TypeScript 타입
-│       └── utils/         # 유틸리티
-├── simulator/             # 시뮬레이터 서버
-│   └── src/
-│       ├── adapters/      # 센서/드론 제어 어댑터
-│       ├── core/          # 핵심 기능 (fusion, engagement, logging, scenario)
-│       ├── models/        # 드론 행동 모델
-│       ├── sensors/       # 센서 시뮬레이션 (radar, acoustic, eo)
-│       ├── websocket/     # WebSocket 서버
-│       ├── batch/         # 배치 실험
-│       └── evaluation/    # 성능 평가
-├── shared/                # 공유 타입/스키마
-└── analysis/              # Python 분석 도구
-```
-
-## 빌드 및 실행 명령어
-
-### 시뮬레이터 서버
+### Simulator Server (Node.js + TypeScript)
 ```bash
 cd simulator
 npm install
-npm run dev          # 개발 서버 실행 (ws://localhost:8080)
-npm run build        # TypeScript 컴파일
-npm run test         # Jest 테스트 실행
-npm run batch        # 배치 실험 실행
-npm run eval:fast    # 빠른 성능 평가
-npm run eval:full    # 전체 성능 평가 (논문용)
+npm run dev          # Dev server at ws://localhost:8080
+npm run build        # TypeScript compilation
+npm run test         # Run all Jest tests
+npm run test:watch   # Watch mode for tests
 ```
 
-### Frontend
+### Frontend (React + TypeScript)
 ```bash
 cd frontend
 npm install
-npm run dev          # 개발 서버 실행 (http://localhost:3000)
-npm run build        # 프로덕션 빌드
-npm run preview      # 빌드 결과 미리보기
+npm run dev          # Dev server at http://localhost:3000
+npm run build        # Production build (tsc + vite)
 ```
 
-### 분석 도구
+### Batch Experiments & Evaluation
+```bash
+cd simulator
+npm run batch:quick      # 5 runs, 30s each
+npm run batch:full       # 50 runs, 120s each
+npm run eval:fast        # Fast evaluation profile
+npm run eval:full        # Full evaluation (paper-quality)
+```
+
+### Python Analysis
 ```bash
 cd analysis
 pip install -r requirements.txt
@@ -82,56 +45,84 @@ python scripts/generate_report.py --full
 python auto_tune.py --trials 30 --profile fast
 ```
 
-## 핵심 개념
+## Architecture Overview
 
-### 센서 시뮬레이션
-- **Pseudo-Radar**: 노이즈, 오탐률(7%), 미탐률(1.5%) 모델링
-- **음향 센서**: CRNN 기반 드론 활동 상태 분류
-- **EO 카메라**: 전자광학 센서
+### Layer Structure
+```
+WebSocket Layer (ws://localhost:8080)
+    ↓
+Simulation Engine (simulation.ts - tick-based, 100ms interval)
+    ↓
+Core Modules:
+├── Sensor Fusion (core/fusion/) - EKF/weighted avg modes
+├── Threat Assessment (core/fusion/threatScore.ts) - multi-factor scoring
+├── Engagement Manager (core/engagement/) - intercept decisions
+└── Logging (core/logging/) - JSONL event logging
+    ↓
+Sensor & Behavior Models:
+├── Sensors: radar.ts, acousticSensor.ts, eoSensor.ts
+└── Models: hostileDrone.ts, interceptor.ts, guidance.ts
+    ↓
+Adapters (adapters/) - Factory pattern for 2D internal sensors/controllers
+```
 
-### 드론 행동 모델
-- **적 드론**: NORMAL, RECON, ATTACK_RUN, EVADE 모드
-- **요격 드론**: STANDBY, LAUNCHING, PURSUING, ENGAGING, RETURNING 상태
+### Communication Flow
+- Frontend connects via WebSocket to simulator server
+- Bidirectional JSON messages validated with Zod schemas
+- All events logged to `simulator/logs/*.jsonl` for analysis
 
-### 위협 평가
-거리(30%), 속도(25%), 행동(15%), 탑재체(15%), 크기(15%) 기반 평가
-- CRITICAL: 75점 이상
-- DANGER: 50~74점
-- CAUTION: 25~49점
-- INFO: 24점 이하
+### Key Design Patterns
+- **Factory Pattern**: `AdapterFactory` for sensor/drone controller creation
+- **State Machine**: Interceptor drone states (STANDBY → LAUNCHING → PURSUING → ENGAGING → RETURNING)
+- **Adapter Pattern**: Abstraction layer for different simulation modes (currently 2D-only)
 
-## 환경 설정
+## Key Source Files
 
-`simulator/.env.example` 파일 참조:
-- `SIMULATOR_PORT`: WebSocket 서버 포트 (기본: 8080)
-- `LOG_ENABLED`: JSONL 로깅 활성화
-- `SIM_MODE`: INTERNAL (2D-only 지원)
+| File | Purpose |
+|------|---------|
+| `simulator/src/simulation.ts` | Main simulation engine (~50K lines) |
+| `simulator/src/core/fusion/sensorFusion.ts` | Multi-sensor fusion logic |
+| `simulator/src/core/fusion/threatScore.ts` | Threat assessment (0-100 score) |
+| `simulator/src/models/interceptor.ts` | Interceptor state machine + PN guidance |
+| `simulator/src/models/hostileDrone.ts` | Enemy drone behavior modes |
+| `shared/schemas.ts` | Zod schemas for WebSocket messages |
+| `frontend/src/hooks/useWebSocket.ts` | WebSocket connection management |
 
-## 코딩 컨벤션
+## Coding Conventions
 
 ### TypeScript
-- 엄격 모드(strict) 사용
-- 타입 정의는 `types/` 또는 `types.ts` 파일에 모아서 관리
-- 공유 타입은 `shared/schemas.ts`에 정의
+- Strict mode enabled in both simulator and frontend
+- Types in `types/` directories or `types.ts` files
+- Shared types in `shared/schemas.ts` (Zod schemas → TypeScript types)
+- Path alias: `@shared/*` → `../shared/*` (simulator only)
 
-### 테스트
-- Jest 사용 (`simulator/__tests__/`)
-- 단위 테스트 파일명: `*.test.ts`
+### Testing
+- Jest with ts-jest preset
+- Tests in `simulator/src/__tests__/*.test.ts`
+- Run single test: `npm run test -- --testPathPattern="threatScore"`
 
-### 로깅
-- JSONL 포맷으로 `simulator/logs/`에 저장
-- 이벤트 타입: drone_spawned, radar_detection, threat_score_update, intercept_result 등
+### Logging
+- JSONL format in `simulator/logs/`
+- Event types: drone_spawned, radar_detection, audio_detection, eo_detection, fused_track_update, threat_score_update, engage_command, intercept_result, manual_action
 
-## 주요 파일
+## Domain Concepts
 
-- `simulator/src/simulation.ts`: 시뮬레이션 엔진 메인 로직
-- `simulator/src/config.ts`: 시뮬레이터 설정
-- `frontend/src/App.tsx`: 프론트엔드 진입점
-- `frontend/src/hooks/useWebSocket.ts`: WebSocket 연결 관리
-- `shared/schemas.ts`: 공유 Zod 스키마
+### Threat Level Thresholds
+- CRITICAL: 75+ (immediate response)
+- DANGER: 50-74 (prepare response)
+- CAUTION: 25-49 (monitor)
+- INFO: 0-24 (information gathering)
 
-## WebSocket 통신
+### Drone Behavior Modes
+- **Enemy**: NORMAL, RECON, ATTACK_RUN, EVADE
+- **Interceptor**: STANDBY, LAUNCHING, PURSUING, ENGAGING, RETURNING
 
-- 서버: `ws://localhost:8080`
-- 프론트엔드 프록시: `/ws` → `ws://localhost:8000` (vite.config.ts)
-- 메시지 포맷: JSON (Zod 스키마로 검증)
+### Intercept Methods
+- RAM (collision, <5m), GUN (ballistic, 100-400m), NET (net gun, <100m), JAM (jamming, 50-300m)
+
+## Environment Configuration
+
+Copy `simulator/.env.example` to `.env`:
+- `SIMULATOR_PORT`: WebSocket port (default: 8080)
+- `LOG_ENABLED`: Enable JSONL logging
+- `SIM_MODE`: INTERNAL (2D-only mode)
