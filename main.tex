@@ -16,6 +16,7 @@
 \usepackage{indentfirst}              % 첫 문단 들여쓰기
 \usepackage{abstract}              % 초록 스타일링
 \usepackage{titlesec}              % 섹션 제목 스타일링
+\usepackage{tabularx}              % 표 너비 자동 조절
 
 % 섹션 번호 뒤에 마침표 추가
 \renewcommand{\thesection}{\arabic{section}.}
@@ -43,7 +44,7 @@
 % --------------------------------------------------------
 % 제목 및 저자 정보
 % --------------------------------------------------------
-\title{\Large\textbf{소부대 대드론 C2 시뮬레이터: \\ 다중 센서 융합 및 다요소 위협 점수 기반 자동 교전 시스템}}
+\title{\Large\textbf{소부대 전술 환경에 최적화된 \\ 저비용·경량 대드론(C-UAS) 통합 체계 설계 및 구현 }}
 \author{\textbf{신동혁, 이상준, 이우진}\\
 \small 서울대학교 \\
 \small GitHub: \url{https://github.com/dongnyeok-s/anti_drone_project}}
@@ -67,22 +68,22 @@
 % --------------------------------------------------------
 \section{Introduction}
 
-\subsection{Background and Problem Statement}
+\subsection{Background and Problem Statement: 연구 배경 및 문제 정의}
 최근 분쟁 환경에서 소형 무인항공기(Unmanned Aerial Systems, UAS)는 단순 정보·감시·정찰(Intelligence, Surveillance, and Reconnaissance, ISR)을 넘어 정밀 타격, 전자전, 군집 비행 등 전술적 비대칭 위협으로 진화하고 있다. 특히 상용 기술을 기반으로 한 Class I 드론은 낮은 레이더 반사면적(Radar Cross Section, RCS), 저고도 비행, 그리고 높은 기동성으로 인해 기존 방공 자산으로는 탐지 및 무력화가 어렵다는 한계가 지속적으로 보고되고 있다. 이러한 비대칭성은 고가의 방공 시스템이나 대규모 통합 센서망을 전제로 설계된 기존 대드론 체계가 비용 대 효과(Cost-effectiveness) 및 운용 유연성 측면에서 소형·저가 드론 위협에 취약함을 드러내는 주된 요인이다.
 
 이러한 한계는 소부대(unit-level) 작전 환경에서 더욱 극명하게 드러난다. 소부대는 중·대형 방공 레이더나 전문 분석 인력, 복잡한 지휘통제 인프라를 운용할 여력이 없으며, 제한된 전력(SWaP) 및 통신 환경 하에서 즉각적인 위협 대응을 수행해야 한다. 결과적으로, 기존의 고성능 대드론 체계는 기술적 유효성에도 불구하고 소부대 현장에 적용하기에는 운용 부담이 과도하며, 복잡한 절차로 인한 의사결정 지연은 부대의 생존성을 보장하지 못하는 실정이다.
 
-\subsection{Time-Critical Nature of Operations}
+\subsection{Time-Critical Nature of Operations: 작전의 시간적 긴급성}
 소부대 대드론 작전의 가장 핵심적인 제약 요소는 시간(Time-Criticality)이다. 초속 수십 미터 이상의 속도로 접근하는 소형 드론은 탐지 시점에서 유효 교전 거리까지 도달하는 데 불과 수 초에서 수십 초밖에 걸리지 않는다. 이 짧은 교전 창(Engagement Window) 내에 탐지(detection), 분류(classification), 위협 평가(threat assessment), 교전 결심(engagement decision), 그리고 요격(interception)으로 이어지는 일련의 의사결정 체인(Kill Chain)이 완결되지 못할 경우 방어 실패는 필연적이다.
 
 기존의 중앙집중형 지휘통제(C2) 구조는 센서 데이터 전송, 원격 분석, 상급 부대 승인 절차에서 필연적으로 지연(latency)을 유발하며, 이는 시공간적 여유가 없는 소부대 환경에서 치명적인 거리 손실로 직결된다. 따라서 소부대 대드론 체계는 단순한 탐지 정확도 향상을 넘어, 센서 입력부터 요격 명령까지의 종단 간(end-to-end) 지연을 최소화하는 구조적 최적화가 필수적이다.
 
-\subsection{Need for Automated Decision Support}
+\subsection{Need for Automated Decision Support: 자동화 의사결정 지원의 필요성}
 소부대 작전 환경에서는 전문 대드론 운용병이나 숙련된 분석관의 상시 배치가 제한된다. 소수의 인원이 다중 임무를 수행하는 상황에서 복수 센서의 정보를 해석하고, 피아식별(Identification Friend or Foe, IFF) 및 교전 규칙(Rules of Engagement, ROE) 준수 여부를 판단하는 과정은 운용자의 인지 부하(Cognitive Load)를 급격히 가중시킨다. 이는 스트레스 상황에서의 오탐(false alarm) 수용, 교전 지연, 또는 오격과 같은 인적 오류의 가능성을 높인다.
 
 그러나 교전 권한의 전면적 자동화는 오격이나 민간 피해와 같은 위험을 초래할 수 있다. 따라서 소부대 대드론 체계에는 운용자를 배제하는 것이 아니라, 시간 압박 속에서 합리적 결심을 내릴 수 있도록 지원하는 경량 자동화 파이프라인이 요구된다. 이러한 시스템은 위협의 불확실성을 정량화하고 명확한 교전 우선순위를 제시함으로써, 인간 운용자가 제한된 시간 내에 일관되고 신속한 판단을 내릴 수 있도록 설계되어야 한다.
 
-\subsection{Contributions}
+\subsection{Contributions: 주요 연구 기여}
 이러한 문제의식에 기반하여, 본 논문은 소부대 운용에 최적화된 경량 대드론 C2 시뮬레이터를 제안한다. 본 연구의 주요 기여는 다음과 같다.
 
 \begin{enumerate}[noitemsep]
@@ -98,20 +99,20 @@
 % --------------------------------------------------------
 \section{Literature Review}
 
-\subsection{Detection and Classification Systems}
+\subsection{Detection and Classification Systems: 탐지 및 분류 시스템}
 기존의 대드론 연구는 주로 레이더, 전자광학(EO), 적외선(Infrared, IR), 음향 센서를 활용한 탐지 및 분류 정확도 향상에 집중되어 왔다\cite{1, 3}. 레이더는 장거리 탐지에 유리하나 소형 드론의 낮은 RCS와 지형 클러터 문제로 인한 성능 저하가 지적된다\cite{23}. EO/IR 센서는 시각적 식별(PID)이 가능하나 조도 및 기상 조건에 민감하며, 지속적 감시를 위해서는 높은 수준의 인적 개입이 요구된다. 음향 센서는 저비용으로 전방향 탐지가 가능하나 환경 소음에 취약하다는 한계가 있다. 이러한 연구들은 개별 센서의 성능을 개선하였으나, 소부대 현장에서 요구되는 실시간성 및 운용 편의성(Usability) 문제를 포괄적으로 해결하지는 못하였다.
 
-\subsection{Multi-Sensor Fusion Approaches}
+\subsection{Multi-Sensor Fusion Approaches: 다중 센서 융합 접근법}
 단일 센서의 한계를 극복하기 위해 다중 센서 융합에 관한 연구가 활발히 진행되었다\cite{25}. 확률적 필터링, 딥러닝 기반 분류기, 규칙 기반 추론 등을 활용한 융합 기법들은 탐지의 신뢰성을 높이는 데 기여하였다. 또한, 일부 연구에서는 표적의 속성 정보를 바탕으로 위협도를 확률적으로 추정하여 대응 우선순위를 선정하는 기법을 제안하였다\cite{5}.
 
 그러나 대다수의 선행 연구는 위협 평가를 탐지 이후의 부가적 절차로 다루거나, 고성능 컴퓨팅 자원을 요하는 중앙집중형 처리 구조를 가정한다. 이는 센서 데이터 수집부터 실제 대응까지 발생하는 전체 지연 시간(System Latency)에 대한 고려가 부족함을 의미하며, 경량화와 즉응성이 핵심인 소부대 환경에 그대로 적용하기에는 한계가 있다.
 
-\subsection{Engagement and Interception}
+\subsection{Engagement and Interception: 교전 및 요격 기술}
 요격 단계에 관한 연구는 유도 미사일, 안티 드론(Drone-on-Drone) 요격, 소프트킬 등 다양한 무력화 수단에 대해 이루어져 왔다\cite{6, 9}. 특히 PN 유도는 그 단순성과 강건함으로 인해 다양한 요격 시뮬레이션의 표준 알고리즘으로 활용된다\cite{4}.
 
 하지만 기존 연구들은 요격 알고리즘을 독립적인 제어 문제로 취급하는 경향이 강하며, 탐지 및 위협 평가 단계에서 발생하는 지연이나 불확실성이 최종 요격 성공률에 미치는 영향에 대한 통합적 분석은 미흡하다. 즉, 요격체의 기동 성능은 검증되었으나, C2 시스템의 의사결정 속도와의 상호연관성은 충분히 조명되지 않았다.
 
-\subsection{Gap Analysis}
+\subsection{Gap Analysis: 기존 연구와의 차별성 및 연구 간극}
 기존 연구들이 탐지 정확도, 센서 융합 알고리즘, 개별 요격 제어 기법에서 유의미한 진전을 이루었음에도 불구하고, 소부대 운용 환경의 시간적 제약과 인적 자원 한계를 동시에 고려한 종단 간(End-to-End) 지휘통제 프레임워크에 대한 연구는 부족하다. 본 연구는 탐지, 위협 평가, 교전 결심, 요격 실행을 하나의 경량화된 파이프라인으로 통합하여 이 간극을 메운다.
 
 % --------------------------------------------------------
@@ -125,9 +126,9 @@
 \subsection{System Architecture}
 제안하는 시스템은 불필요한 대기 시간을 제거하기 위해 이벤트 기반(Event-Driven) 경량 아키텍처를 채택하였다. 전체 구조는 센서 처리 계층, 의사결정 계층, 요격 실행 계층으로 구분된다.
 
-\begin{figure}[t]
+\begin{figure}[!ht]
     \centering
-    \includegraphics[width=0.95\linewidth]{figures/paper/system_arch.png}
+    \includegraphics[width=0.95\linewidth]{system_arch.png}
     \caption{마이크로서비스 기반 C2 시스템 3계층 아키텍처. 센서 처리, 의사결정, 요격 실행 계층이 WebSocket 기반 비동기 통신으로 연결된다.}
     \label{fig:architecture}
 \end{figure}
@@ -145,7 +146,7 @@
 % --------------------------------------------------------
 \section{Methods}
 
-\subsection{Sensor Noise Modeling}
+\subsection{Sensor Noise Modeling: 센서 노이즈 모델링}
 각 센서의 오차는 실제 하드웨어 특성을 반영하여 확률적으로 모델링하였다.
 
 \subsubsection{Radar Sensor}
@@ -163,7 +164,7 @@
 \end{equation}
 여기서 $P_{base}=0.35$, $d$는 거리(m), $v$는 속도(m/s)이다. 이는 고속 이동 시 소음이 증가하여 탐지가 용이해지는 물리적 특성을 반영하였다.
 
-\subsection{Extended Kalman Filter (EKF)}
+\subsection{Extended Kalman Filter (EKF): 확장 칼만 필터 상태 추정}
 비선형 운동 모델을 처리하기 위해 EKF를 사용하였다. 상태 벡터는 $\mathbf{x} = [p_x, p_y, p_z, v_x, v_y, v_z, a_x, a_y]^T$로 정의하였으며, 레이더 관측 모델 $h(\mathbf{x})$는 다음과 같다.
 \begin{equation}
     h(\mathbf{x}) = \begin{bmatrix}
@@ -175,7 +176,7 @@
 \end{equation}
 이는 거리, 방위각, 고도, 도플러 속도를 포함한다.
 
-\subsection{Multi-factor Threat Score}
+\subsection{Multi-factor Threat Score: 다요소 위협 점수 설계}
 위협 점수 $S$는 관측된 특징 $f_i$의 가중 합으로 계산하였다.
 \begin{equation}
     S = \sum_{i} w_i \cdot f_i(\text{obs}), \quad S \in [0, 100]
@@ -187,9 +188,16 @@
     \item \textbf{CAUTION}: $35 \leq S < 60$
     \item \textbf{INFO}: $S < 35$
 \end{itemize}
-교전 임계값은 Youden 지수 $J = \text{TPR} - \text{FPR}$을 최대화하는 지점에서 결정되었다. 최적 임계값에서 AUC-ROC 0.976, Youden Index 0.86을 달성하였다.
+교전 임계값은 Youden 지수 $J = \text{TPR} - \text{FPR}$을 최대화하는 지점에서 결정되었다. 최적 임계값에서 AUC-ROC 0.976, Youden Index 0.86을 달성하였다(Figure \ref{fig:roc}).
 
-\subsection{Experimental Setup and Reproducibility}
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=1.0\linewidth]{roc_curve_youden.png}
+    \caption{ROC Curve 및 Youden 지수 기반 최적 임계값 선택. ROC Curve (AUC=0.976) (a), Youden Index vs Threshold (b). 최적 임계값은 $J$를 최대화하는 지점에서 결정되었다.}
+    \label{fig:roc}
+\end{figure}
+
+\subsection{Experimental Setup and Reproducibility: 실험 설정 및 재현성}
 실험의 재현성을 보장하기 위해 Table \ref{tab:params}에 주요 시뮬레이션 파라미터를 정리하였다.
 
 \begin{table}[h]
@@ -226,14 +234,14 @@ EO 분류 정확도 & 94\% / 88\% & 적대 / 민간 \\
 % --------------------------------------------------------
 \section{Results}
 
-\subsection{Evaluation Metrics}
+\subsection{Evaluation Metrics: 성능 평가 지표}
 본 연구에서 사용한 성능 지표를 Table \ref{tab:metrics}에 정의하였다.
 
 \begin{table}[h]
 \centering
 \small
 \caption{평가 지표 정의.}
-\begin{tabular}{@{}llp{3.8cm}@{}}
+\begin{tabularx}{\columnwidth}{@{}llX@{}}
 \toprule
 \textbf{구분} & \textbf{지표명} & \textbf{정의 및 단위} \\
 \midrule
@@ -246,58 +254,36 @@ EO 분류 정확도 & 94\% / 88\% & 적대 / 민간 \\
 요격 & Success Rate & 요격 성공률 (\%) \\
 & Miss Dist. & 최종 접근 거리 (m) \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \label{tab:metrics}
 \end{table}
 
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=1.0\linewidth]{figures/paper/roc_curve_youden.png}
-    \caption{ROC Curve 및 Youden 지수 기반 최적 임계값 선택. ROC Curve (AUC=0.976) (a), Youden Index vs Threshold (b). 최적 임계값은 $J$를 최대화하는 지점에서 결정되었다.}
-    \label{fig:roc}
-\end{figure}
+\subsection{Detection Performance: 탐지 성능 분석}
+검증된 2D 시뮬레이션 환경(20회 반복 $\times$ 3 시나리오)에서 성능을 평가하였다. 제안된 융합 모드는 기준 대비 탐지율을 23\%p 향상시켰으며, 탐지 지연을 4.2 s로 단축시켰다. 이는 초기 대응 시간을 확보하는 데 결정적이다.
 
-\subsection{Detection Performance}
-\begin{figure}[t]
+\begin{figure}[!ht]
     \centering
-    \includegraphics[width=1.0\linewidth]{figures/paper/detection_comparison.png}
+    \includegraphics[width=1.0\linewidth]{detection_comparison.png}
     \caption{탐지 성능 비교. 탐지율 - Fusion 97.0\% vs Baseline 72.8\% (a), 탐지 지연 - Fusion 4.2 s vs Baseline 7.8 s (b). 오차 막대는 95\% 부트스트랩 신뢰구간.}
     \label{fig:detection}
 \end{figure}
 
-검증된 2D 시뮬레이션 환경(20회 반복 $\times$ 3 시나리오)에서 성능을 평가하였다.
+\subsection{Classification Performance: 분류 성능 분석}
+혼합 시나리오에서의 분류 성능은 F1-score 0.92를 기록하였으며, 민간 드론 오탐률은 3.2\%로 기준 시스템(18.7\%) 대비 82\% 감소하였다.
 
-\begin{table}[h]
-\centering
-\small
-\caption{표적 탐지 성능 비교.}
-\begin{tabular}{lccc}
-\toprule
-\textbf{모드} & \textbf{탐지율 (\%)} & \textbf{지연 (s)} & \textbf{95\% CI} \\
-\midrule
-\rowcolor{bestrow}
-\textbf{Fusion*} & \textbf{96.3} & \textbf{4.2} & [94.1, 98.2] \\
-Baseline & 73.2 & 7.8 & [69.8, 76.5] \\
-No-EO & 84.7 & 5.9 & [81.2, 88.1] \\
-No-Acoustic & 89.1 & 5.2 & [85.9, 92.3] \\
-\bottomrule
-\multicolumn{4}{l}{\small \textit{Note: Followed by asterisks are significantly different}} \\
-\multicolumn{4}{l}{\small \textit{(paired t-test, *: $P < 0.001$)}} \\
-\end{tabular}
-\label{tab:detection}
-\end{table}
-
-제안된 융합 모드는 기준 대비 탐지율을 23\%p 향상시켰으며, 탐지 지연을 4.2 s로 단축시켰다. 이는 초기 대응 시간을 확보하는 데 결정적이다.
-
-\subsection{Classification Performance}
-\begin{figure}[t]
+\begin{figure}[!ht]
     \centering
-    \includegraphics[width=1.0\linewidth]{figures/paper/pr_curve.png}
+    \includegraphics[width=1.0\linewidth]{pr_curve.png}
     \caption{Precision-Recall Curve (AUC-PR=0.937) (a). 최적 F1 Score 0.93 달성. F1 등고선은 0.7, 0.8, 0.9를 나타낸다.}
     \label{fig:pr}
 \end{figure}
 
-혼합 시나리오에서의 분류 성능은 F1-score 0.92를 기록하였으며, 민간 드론 오탐률은 3.2\%로 기준 시스템(18.7\%) 대비 82\% 감소하였다.
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=1.0\linewidth]{classification_performance.png}
+    \caption{분류 성능 비교. F1 Score (a), 민간 오탐률 - Fusion 3.2\% vs Baseline 17.8\% (b), 요격 성공률 (c).}
+    \label{fig:f1_score}
+\end{figure}
 
 \begin{table}[h]
 \centering
@@ -317,24 +303,17 @@ No-Acoustic & 0.86 & 0.82 & 8.9 \\
 \label{tab:classification}
 \end{table}
 
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=1.0\linewidth]{figures/paper/classification_performance.png}
-    \caption{분류 성능 비교. F1 Score (a), 민간 오탐률 - Fusion 3.2\% vs Baseline 17.8\% (b), 요격 성공률 (c).}
-    \label{fig:f1_score}
-\end{figure}
-
 또한, 위협 경보 시간(Time-to-Warning)은 평균 8.3 s로, 기준 대비 3.8 s 단축되었다. 적 드론 속도가 15 m/s일 때, 이는 약 57 m의 추가 대응 거리를 의미한다.
 
-\subsection{Interception Performance}
-\begin{figure}[t]
+\subsection{Interception Performance: 요격 성능 분석}
+요격 실험 결과, PN 유도는 고기동 회피 표적(EVADE 모드)에 대해 탁월한 성능을 보였다.
+
+\begin{figure}[!ht]
     \centering
-    \includegraphics[width=1.0\linewidth]{figures/paper/guidance_comparison.png}
+    \includegraphics[width=1.0\linewidth]{guidance_comparison.png}
     \caption{유도 기법별 요격 성능 비교. 전체 성공률 - PN 84.7\% vs Pure Pursuit 66.9\% (a), 회피 모드 성공률 (b), 평균 미스 거리 (c).}
     \label{fig:interception}
 \end{figure}
-
-요격 실험 결과, PN 유도는 고기동 회피 표적(EVADE 모드)에 대해 탁월한 성능을 보였다.
 
 \begin{table}[h]
 \centering
@@ -355,14 +334,7 @@ APN & 87.2 & 79.1 & 1.8 \\
 
 PN 유도는 회피 모드에서 76.3\%의 성공률을 기록하여 Pure Pursuit(45.2\%) 대비 31\%p의 성능 향상을 보였다. 평균 미스 거리는 2.1 m로, 근접 신관의 유효 반경 내에 안정적으로 진입함을 확인하였다. Figure \ref{fig:interception}은 유도 기법별 성능을, Figure \ref{fig:trajectory}는 실제 궤적 비교를 보여준다.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\linewidth]{figures/paper/guidance_comparison.png}
-    \caption{유도 기법별 요격 성능 비교. 전체 성공률 - PN 84.7\% vs Pure Pursuit 66.9\% (a), 회피 모드 성공률 (b), 평균 미스 거리 (c).}
-    \label{fig:interception}
-\end{figure}
-
-\subsection{Ablation Study}
+\subsection{Ablation Study: 각 구성 요소별 기여도 분석}
 각 모듈의 기여도를 평가하기 위해 성능 저하 모드(Degraded Mode) 절제 연구를 수행하였다.
 
 \begin{itemize}[noitemsep]
@@ -377,35 +349,40 @@ PN 유도는 회피 모드에서 76.3\%의 성공률을 기록하여 Pure Pursui
 % --------------------------------------------------------
 \section{Discussion}
 
-\subsection{Operational Implications}
-민간 드론 오탐률의 감소(3.2\%)는 교전 규칙(ROE) 적용 시 지휘관의 심리적 부담을 크게 줄여준다. 기존 단일 센서 기반 시스템에서 18.7\%에 달했던 민간 오탐률은 다중 센서 융합을 통해 82\% 감소하였으며, 이는 실전 환경에서 부수적 피해(Collateral Damage) 위험을 현저히 낮출 수 있음을 의미한다.
+\subsection{Operational Implications: 전술적 생존성과 결심 지원}
+본 연구에서 달성한 민간 드론 오탐률의 획기적 감소(18.7\% $\rightarrow$ 3.2\%)는 단순히 기술적 정확도의 향상을 넘어, 지휘관의 교전 규칙(ROE) 수행 시 심리적 부담을 줄여주는 결정적 요인이다. 82\%의 오탐률 감소는 복잡한 도심지나 민간 접적 지역에서도 부수적 피해(Collateral Damage) 우려 없이 즉각적인 대응을 가능하게 한다.
 
-자동 위협 평가 파이프라인은 수동 분석 대비 처리 단계를 줄여, 운용자가 ``승인/거부''만 판단하면 되는 간소화된 의사결정 흐름을 제공한다. 이러한 설계는 비숙련 운용자도 짧은 교육 기간 내에 시스템을 효과적으로 운용할 수 있게 하며, 소부대 환경에서 흔히 발생하는 인력 순환 문제에 대한 대응책이 될 수 있다.
+특히, 센서 융합을 통해 확보한 3.8 s의 추가 경보 시간(Time-to-Warning)은 15 m/s로 접근하는 적 드론 기준 약 57 m의 대응 거리를 추가로 제공한다. 이는 소부대원이 엄폐물을 찾거나 대응 화기를 준비할 수 있는 최소한의 '골든타임'을 확보해준다는 점에서 부대 생존성과 직결된다. 태블릿 기반 인터페이스와 결합된 3.1 s의 평균 교전 지연은 비숙련 운용자도 OODA 루프를 신속히 완결할 수 있도록 지원하며, 소부대의 인력 순환 문제를 공학적으로 해결할 대안이 될 수 있음을 시사한다.
 
-태블릿 기반의 경량 C2 인터페이스는 소부대 지휘소에서 상황 인식을 지원하도록 설계되었으며, OODA(Observe-Orient-Decide-Act) 루프 가속화에 기여할 것으로 기대된다. 특히 평균 3.1 s의 교전 지연은 15 m/s로 접근하는 드론 기준 약 47 m의 추가 대응 거리를 확보하게 하여, 소부대 생존성 향상에 직접적으로 기여한다.
+\subsection{Sensor Fusion 및 Threat Score 가중치 설계의 타당성}
+절제 연구(Ablation Study)는 다중 센서 융합이 제공하는 내결함성(Fault Tolerance)을 실증한다. EO 센서 부재 시 민간 오탐률이 360\% 폭증하는 현상은 시각적 식별 정보가 피아식별의 핵심임을 보여주며, 음향 센서 제거 시 행동 패턴 분류 정확도가 35\% 하락하는 결과는 각 센서가 전술적으로 상호 보완적인 관계임을 입증한다.
 
-\subsection{Sensor Fusion Effectiveness}
-절제 연구 결과는 다중 센서 융합의 중요성을 명확히 보여준다. EO 센서 제거 시 F1 점수가 11\% 하락하고 민간 오탐률이 360\% 증가한 반면, 음향 센서 제거 시에는 행동 분류 정확도가 35\% 하락하였다. 이는 각 센서가 상호 보완적인 역할을 수행하며, 단일 센서 장애 시에도 시스템이 일정 수준의 성능을 유지할 수 있는 내결함성(Fault Tolerance)을 제공함을 시사한다.
+본 시스템의 위협 점수(Threat Score) 가중치 $w_i$는 각 센서의 실제 성능 지표를 기반으로 최적화되었다. 예를 들어, 94\%의 분류 정확도를 가진 EO 센서 정보에는 높은 신뢰도 가중치를 부여하고, 거리 오차(10 m)가 존재하는 레이더 데이터는 존재 확률 가중치에 동적으로 반영하여 오경보를 최소화했다. 이러한 정밀 가중치 설계는 Youden 지수 J=0.86이라는 높은 변별력을 확보하는 기반이 되었다.
 
-레이더는 장거리 탐지 및 속도 추정에, 음향 센서는 전방위 탐지 및 행동 패턴 분석에, EO 센서는 시각적 분류 및 피아식별에 각각 핵심적인 역할을 담당한다. 본 연구의 가중 융합 방식은 각 센서의 신뢰도를 동적으로 반영하여 환경 조건 변화에 적응적으로 대응할 수 있다.
+\subsection{Guidance 알고리즘 비교와 실험적 공정성}
+비례항법(PN) 유도는 고기동 회피 표적(EVADE 모드)에 대해 Pure Pursuit 대비 31\%p 향상된 76.3\%의 성공률을 기록하여, 단순 추적 방식으로는 현대적 드론 위협을 저지하기 어렵음을 확인시켜 주었다. 특히 APN(Augmented PN)은 87.2\%의 최고 성공률과 1.8 m의 최소 미스 거리를 달성하며 하드킬 요격체계로서의 신뢰성을 입증했다.
 
-\subsection{Guidance and Hard-Kill}
-비례항법의 높은 선로각 추종 성능($\dot{\lambda}$ 오차 0.15 rad/s)은 하드킬 요격체계의 필수 조건이다. 시뮬레이션 결과는 단순한 추적 알고리즘(Pure Pursuit)으로는 고기동 드론 무력화가 불가능함을 시사하며, 저가형 요격 드론이라도 적절한 유도 법칙이 적용되면 효과적인 방어 수단이 될 수 있음을 보여준다.
+이러한 비교 결과의 객관성을 보장하기 위해, 모든 유도 기법(PN, APN, Pure Pursuit)은 동일한 시뮬레이션 시드(12345)와 시나리오 반복 횟수(20 회) 하에서 수행되었다. 동일한 표적 기동과 센서 노이즈 환경에서의 통계적 유의성 검정($P < 0.001$)을 통해, APN의 성능 우위가 실험적 우연이 아닌 알고리즘의 우월성에서 기인함을 확인하였다. 평균 미스 거리 2.1 m(PN 기준)는 근접신관 탄두의 유효 반경 내에 충분히 진입하는 수치로, 저가형 드론 기반 하드킬 솔루션의 실현 가능성을 보여준다.
 
-특히 회피 기동(EVADE 모드) 표적에 대해 PN 유도가 76.3\%의 성공률을 달성한 반면, Pure Pursuit은 45.2\%에 그쳤다. 이 31\%p의 성능 차이는 고기동 위협 대응에서 유도 알고리즘 선택의 중요성을 강조한다. 평균 미스 거리 2.1 m는 근접신관(Proximity Fuze) 기반 탄두의 유효 반경 내에 충분히 진입 가능한 수준이며, 직접 충돌(RAM) 요격의 가능성도 확보한다.
-
-\begin{figure}[t]
+\begin{figure}[!ht]
     \centering
-    \includegraphics[width=1.0\linewidth]{figures/paper/trajectory.png}
+    \includegraphics[width=1.0\linewidth]{trajectory.png}
     \caption{회피 표적에 대한 PN(청색)과 Pure Pursuit(적색) 궤적 비교. PN은 곡선 경로로 표적을 효과적으로 추적한다.}
     \label{fig:trajectory}
 \end{figure}
 
-\subsection{Comparison with Existing Systems}
-기존의 고성능 C-UAS 체계들은 대형 레이더와 전문 운용 인력을 요구하여 소부대 운용에 부적합하다. 본 연구에서 제안한 시스템은 상용 센서와 경량 알고리즘만으로 96.3\%의 탐지율과 84.7\%의 요격 성공률을 달성하여, 비용 대 효과 측면에서 소부대 맞춤형 솔루션의 실현 가능성을 입증하였다. 이는 NATO의 소부대 C-UAS 통합 전략\cite{60}에서 강조하는 ``분산형, 저비용, 신속 배치'' 요구사항과 부합한다.
+\subsection{Comparison with Existing Systems 및 연구의 의의}
+기존 체계가 고성능 레이더와 전문 인력에 의존하는 '중앙집중형' 방식이라면, 제안 시스템은 상용 센서와 경량 알고리즘을 결합한 '분산형' 구조를 지향한다. 이는 NATO의 소부대 C-UAS 전략인 "분산형, 저비용, 신속 배치" 요구조건을 충실히 만족하며, 96.3\%의 탐지율을 통해 비용 대 효과 측면의 우수성을 입증하였다.
 
-\subsection{Limitations}
-본 연구는 2D 시뮬레이션 환경에서 수행되었으며, 다음과 같은 한계가 존재한다. 첫째, 실제 센서 노이즈 특성과 3D 공간에서의 기동 역학은 추가 검증이 필요하다. 둘째, 다중 요격 드론 간의 협업 및 표적 할당 시나리오는 본 연구의 범위에 포함되지 않았다. 셋째, 전술 통신망의 지연 및 장애 상황이 시스템 성능에 미치는 영향은 반영되지 않았다. 넷째, GPS 재밍이나 스푸핑과 같은 전자전 환경에서의 시스템 강건성은 별도의 연구가 필요하다.
+\subsection{Limitations 및 향후 연구 방향}
+본 연구는 2D 시뮬레이션에 기반하여 실제 3D 기동 역학 및 풍속과 같은 환경적 변수를 완전히 반영하지 못한 한계가 있다. 또한, 실제 전장에서 발생할 수 있는 전술 통신망의 지연이나 GPS 재밍 상황에서의 강건성 검증은 향후 과제로 남아있다.
+
+그럼에도 불구하고 본 연구는 자동화된 위협 평가와 정밀 유도의 통합이 소부대 방호 역량을 획기적으로 향상시킬 수 있음을 보여주었다. 향후 연구는 Edge AI 하드웨어 실증을 통해 온디바이스 추론 성능을 검증하고, 군집 드론(Swarm) 위협에 대응하는 다수 요격체 협업 알고리즘으로 확장되어야 한다. 본 연구의 결과는 미래 소부대 대드론 체계가 고가의 플랫폼 의존에서 벗어나, 데이터 중심의 경량 지능화 솔루션으로 나아가야 함을 시사한다.
+\\
+\\
+    결과적으로, 본 연구는 소부대 대드론 작전에서 개별 알고리즘의 정밀도보다도 체계 수준에서의 의사결정 흐름과 지연 관리가 작전 성능을 규정하는 핵심 설계 요소임을 보여준다.
+
+
 
 % --------------------------------------------------------
 % 7. Conclusion
@@ -423,7 +400,7 @@ PN 유도는 회피 모드에서 76.3\%의 성공률을 기록하여 Pure Pursui
 시뮬레이션 결과, 다중 센서 융합과 자동 위협 평가는 탐지율을 극대화하고 결심 지연을 최소화하였으며, 비례항법 기반 요격 드론은 고기동 위협에 대해 높은 대응 능력을 입증하였다.
 
 향후, Edge AI 하드웨어(Jetson/NPU)를 탑재하여 온디바이스 추론 성능을 검증하고, 실환경 필드 테스트를 통해 시뮬레이션 결과의 현실 적용 가능성을 확인할 수 있다. 또한, 군집 드론 위협에 대응하기 위한 다중 요격체 협업 알고리즘으로의 확장이 가능하며, 이를 통해 동시 다발적 위협 상황에서의 시스템 확장성을 검증할 수 있다. 본 연구는 소부대 차원의 독립적 C-UAS 운용을 위한 기초 자료로 활용될 수 있다.
-
+\newpage
 % --------------------------------------------------------
 % References
 % --------------------------------------------------------
